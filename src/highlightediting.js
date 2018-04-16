@@ -117,10 +117,6 @@ function _buildDowncastDefinition( options ) {
 		definition.model.values.push( option.model );
 
 		definition.view[ option.model ] = ( modelAttributeValue, viewWriter ) => {
-			if ( modelAttributeValue !== option.model ) {
-				return null;
-			}
-
 			const attributes = { class: option.class };
 
 			// Highlight element has to have higher priority than other view elements because it must sticks directly to the text.
