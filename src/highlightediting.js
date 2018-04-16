@@ -7,9 +7,12 @@
  * @module highlight/highlightediting
  */
 
-import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
-
 import HighlightCommand from './highlightcommand';
+import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
+import AttributeElement from '@ckeditor/ckeditor5-engine/src/view/attributeelement';
+
+import { downcastAttributeToElement } from '@ckeditor/ckeditor5-engine/src/conversion/downcast-converters';
+import { upcastElementToAttribute } from '@ckeditor/ckeditor5-engine/src/conversion/upcast-converters';
 
 /**
  * The highlight editing feature. It introduces the {@link module:highlight/highlightcommand~HighlightCommand command} and the `highlight`
@@ -85,18 +88,23 @@ export default class HighlightEditing extends Plugin {
 
 		const options = editor.config.get( 'highlight.options' );
 
-		// Set-up the two-way conversion.
-		editor.conversion.attributeToElement( _buildDefinition( options ) );
+		// Prepare model to view conversion.
+		editor.conversion.for( 'downcast' ).add( _buildDowncastDefinition( options ) );
+
+		// Prepare view to model conversion.
+		for ( const definition of _buildUpcastDefinitions( options ) ) {
+			editor.conversion.for( 'upcast' ).add( definition );
+		}
 
 		editor.commands.add( 'highlight', new HighlightCommand( editor ) );
 	}
 }
 
-// Converts the options array to a converter definition.
+// Converts the options array to the downcast converter definition.
 //
 // @param {Array.<module:highlight/highlight~HighlightOption>} options An array with configured options.
 // @returns {module:engine/conversion/conversion~ConverterDefinition}
-function _buildDefinition( options ) {
+function _buildDowncastDefinition( options ) {
 	const definition = {
 		model: {
 			key: 'highlight',
@@ -107,11 +115,40 @@ function _buildDefinition( options ) {
 
 	for ( const option of options ) {
 		definition.model.values.push( option.model );
-		definition.view[ option.model ] = {
-			name: 'mark',
-			classes: option.class
+
+		definition.view[ option.model ] = ( modelAttributeValue, viewWriter ) => {
+			if ( modelAttributeValue !== option.model ) {
+				return null;
+			}
+
+			const attributes = { class: option.class };
+
+			// Highlight element has to have higher priority than other view elements because it must sticks directly to the text.
+			// See: https://github.com/ckeditor/ckeditor5-highlight/issues/17.
+			const options = { priority: AttributeElement.DEFAULT_PRIORITY + 5 };
+
+			return viewWriter.createAttributeElement( 'mark', attributes, options );
 		};
 	}
 
-	return definition;
+	return downcastAttributeToElement( definition );
+}
+
+// Converts the options array to the upcast converter definition.
+//
+// @param {Array.<module:highlight/highlight~HighlightOption>} options An array with configured options.
+// @returns {Array.<module:engine/conversion/conversion~ConverterDefinition>}
+function _buildUpcastDefinitions( options ) {
+	return options.map( option => {
+		return upcastElementToAttribute( {
+			model: {
+				key: 'highlight',
+				value: option.model
+			},
+			view: {
+				name: 'mark',
+				classes: option.class
+			}
+		} );
+	} );
 }
