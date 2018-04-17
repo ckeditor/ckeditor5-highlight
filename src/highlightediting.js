@@ -119,7 +119,7 @@ function _buildDowncastDefinition( options ) {
 		definition.view[ option.model ] = ( modelAttributeValue, viewWriter ) => {
 			const attributes = { class: option.class };
 
-			// Highlight element has to have higher priority than other view elements because it must sticks directly to the text.
+			// Highlight element has to have higher priority than other view elements because it must stick directly to the text.
 			// See: https://github.com/ckeditor/ckeditor5-highlight/issues/17.
 			const options = { priority: AttributeElement.DEFAULT_PRIORITY + 5 };
 
