@@ -14,9 +14,11 @@ import ImageCaption from '@ckeditor/ckeditor5-image/src/imagecaption';
 import List from '@ckeditor/ckeditor5-list/src/list';
 import Enter from '@ckeditor/ckeditor5-enter/src/enter';
 import Delete from '@ckeditor/ckeditor5-typing/src/delete';
+import FontSize from '@ckeditor/ckeditor5-font/src/fontsize';
 
 import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
 import { getData as getModelData, setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
+import { getData as getViewData } from '@ckeditor/ckeditor5-engine/src/dev-utils/view';
 
 describe( 'Highlight', () => {
 	let editor, model, element;
@@ -27,7 +29,7 @@ describe( 'Highlight', () => {
 
 		return ClassicTestEditor
 			.create( element, {
-				plugins: [ Highlight, BlockQuote, Paragraph, Heading, Image, ImageCaption, List, Enter, Delete ]
+				plugins: [ Highlight, BlockQuote, Paragraph, Heading, Image, ImageCaption, List, Enter, Delete, FontSize ]
 			} )
 			.then( newEditor => {
 				editor = newEditor;
@@ -63,6 +65,24 @@ describe( 'Highlight', () => {
 				'<paragraph>foo[<$text highlight="yellowMarker">foo</$text></paragraph>' +
 				'<image src="foo.png"><caption><$text highlight="yellowMarker">abc</$text></caption></image>' +
 				'<paragraph><$text highlight="yellowMarker">bar</$text>]bar</paragraph>'
+			);
+		} );
+	} );
+
+	describe( 'compatibility with font size', () => {
+		it( 'the view "mark" element should stick directly to the text', () => {
+			setModelData( model, '<paragraph>Foo [Bar] Baz.</paragraph>' );
+
+			editor.execute( 'highlight', { value: 'yellowMarker' } );
+
+			expect( getViewData( editor.editing.view ) ).to.equal(
+				'<p>Foo {<mark class="marker-yellow">Bar</mark>} Baz.</p>'
+			);
+
+			editor.execute( 'fontSize', { value: 'huge' } );
+
+			expect( getViewData( editor.editing.view ) ).to.equal(
+				'<p>Foo {<span class="text-huge"><mark class="marker-yellow">Bar</mark></span>} Baz.</p>'
 			);
 		} );
 	} );
