@@ -8,6 +8,12 @@ category: features
 
 The {@link module:highlight/highlight~Highlight} feature offers text marking tools that help content authors speed up their work, for example when reviewing content or marking it for future reference. It uses inline `<mark>` elements in the view, supports both markers (background color) and pens (text color), and comes with a flexible configuration.
 
+<info-box info>
+	Please note that highlight command has special behavior for **collapsed selection** inside highlighted text:
+	* it removes highlight when color of highlighted text match to chosen highlight color
+	* it repaints entire highlight element when different highlight color is selected
+</info-box>
+
 ## Demo
 
 {@snippet features/highlight}
